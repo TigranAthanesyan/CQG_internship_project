@@ -1,51 +1,60 @@
 #include <string>
 #include <iostream>
 #include <set>
+#include <vector>
 #include <iterator>
 #include <algorithm>
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
-void MakeDataSet(std::set<std::string>& dataSet)
+class Request
 {
-	dataSet.insert("last name");
-	dataSet.insert("first name");
-	dataSet.insert("mr. / mrs.");
-	dataSet.insert("acct. name");
-	dataSet.insert("phone");
-	dataSet.insert("home e-mail");
-	dataSet.insert("type");
-	dataSet.insert("industry segment");
-	dataSet.insert("work e-mail");
-	dataSet.insert("address");
-	dataSet.insert("city");
-	dataSet.insert("state");
-	dataSet.insert("postal code");
-	dataSet.insert("country");
-	dataSet.insert("last contacted date");
-	dataSet.insert("referral type");
-	dataSet.insert("referral detail");
-	dataSet.insert("sales rep.");
-	dataSet.insert("sales rep. login");
-	dataSet.insert("company office");
-	dataSet.insert("trs admin");
-	dataSet.insert("auth to trade");
-	dataSet.insert("job title");
-	dataSet.insert("contact id");
-}
+public:
+	void Description(std::ostream& = std::cout) const;       //  prints the rules of request protocol
+	void DataDescription(std::ostream& = std::cout) const;   //  prints the types of data
+	void Clear();                                            //  frees the contents of an array of words
+	void SetText(const std::string&);                        //  takes the text and turns it into a query
+	bool IsCorrect() const;                                  //  verifies the correctness of the text
+	bool Close() const;                                      //  checks the instruction for the end of the program
 
-void MakeKeywordsSet(std::set<std::string>& keywordsSet)
-{
-	keywordsSet.insert("get");
-	keywordsSet.insert("count");
-	keywordsSet.insert("from");
-	keywordsSet.insert("if");
-}
+	friend std::istream& operator >> (std::istream& input, Request& request)  //  receives text from the file stream
+	{
+		std::string text;
+		std::getline(input, text);
+		request.SetText(text);
+		return input;
+	}
+	friend std::ostream& operator <<(std::ostream& output, const Request& request)// outputs the content to the file stream
+	{
+		size_t size = request.maximumSize();
+		for (auto i = request.m_phrases.begin(); i != request.m_phrases.end(); ++i)
+		{
+			output << *i;
+			for (int count = i->size(); count < size; ++count)
+				output << '-';
+			output << "------ " << (request.isKeyword(*i) ? "keyword" :
+				(request.isData(*i) ? "data" : "value")) << std::endl;
+		}
+		return output;
+	}
 
-bool IsCorrect(std::string& text, const std::set<std::string>& set)
-{
-	std::transform(text.begin(), text.end(), text.begin(), ::tolower);
-	return std::find(set.begin(), set.end(), text) != set.end();
-}
+	static std::set<std::string> m_dataSet;                   //  container for storing data types
+	static std::vector<std::string> m_keywordVector;          //  container for storing keywords
+
+private:
+	bool isData(const std::string&) const;
+	bool isKeyword(const std::string&, bool = false) const;
+	bool isBinaryCondition(const std::string&) const;
+	bool isUnaryCondition(const std::string&) const;
+	bool isAndOr(const std::string&) const;
+	bool isValue(const std::string&) const;
+	bool isEmail(const std::string&) const;
+	bool isPhoneNumber(const std::string&) const;
+	void splitToWords(const std::string&, std::vector<std::string>&) const;
+	void getPhrases(std::vector<std::string>&);
+	size_t maximumSize() const;
+
+	std::vector<std::string> m_phrases;
+};
 
 #endif // PROTOCOL_H
