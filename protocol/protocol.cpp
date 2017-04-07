@@ -34,6 +34,7 @@ std::vector<std::string> MakeKeywordVector()
 {
 	//  pushing keywords
 	std::vector<std::string> keywordVector;
+	keywordVector.push_back("all");
 	keywordVector.push_back("that");
 	keywordVector.push_back("and");
 	keywordVector.push_back("or");
@@ -62,6 +63,8 @@ void Request::Description(std::ostream& output) const
 {
 	output << "    Request types.." << std::endl << std::endl
 		<< "-------------------------------------------------------------------------" << std::endl
+		<< " all" << std::endl
+		<< " all that \"condition\" (and/or \"condition\" ...)"
 		<< " \"data type\"" << std::endl
 		<< " \"data type 1\" , \"data type 2\" ..." << std::endl
 		<< " \"data type\" that \"condition\" (and/or \"condition\" ...)" << std::endl
@@ -74,10 +77,10 @@ void Request::Description(std::ostream& output) const
 		<< "-------------------------------------------------------------------------" << std::endl
 		<< " \"data type\" is \"value\"" << std::endl
 		<< " \"data type\" is not \"value\"" << std::endl
-		<< " \"data type\" is more than \"value\"" << std::endl
-		<< " \"data type\" is less than \"value\"" << std::endl
 		<< " \"data type\" is defined" << std::endl
 		<< " \"data type\" is undefined" << std::endl
+		<< " quantity of \"data type\" is more than \"value\"" << std::endl
+		<< " quantity of \"data type\" is less than \"value\"" << std::endl
 		<< "-------------------------------------------------------------------------" << std::endl << std::endl;
 }
 
@@ -114,14 +117,24 @@ bool Request::IsCorrect() const
 	bool dataIsValid = true, quantityOfIsValid = true, allowComma = true;
 	bool thatIsValid = false, commaIsValid = false, valueIsValid = false;
 	bool conditionIsValid = false, andOrIsValid = false, isConditionPart = false;
+	bool moreLessIsValid = false;
 	std::string word;
 	for (auto i = m_phrases.begin(); i != m_phrases.end(); ++i)
 	{
-		if (*i == "quantity of")   // can be only at first of expression
+		if (*i == "all")
+		{
+			if (i != m_phrases.begin())   // can be only at first of expression
+				return false;
+			dataIsValid = quantityOfIsValid = allowComma = false;
+			thatIsValid = true;           // after can be only "that"
+		}
+		else if (*i == "quantity of")
 		{
 			if (!quantityOfIsValid || i + 1 == m_phrases.end())  // can not be the last word
 				return false;
 			quantityOfIsValid = allowComma = false;     // can not be the request like quantity of many data types
+			if (isConditionPart)
+				moreLessIsValid = true;
 		}
 		else if (isData(*i))
 		{
@@ -142,7 +155,7 @@ bool Request::IsCorrect() const
 			if (!thatIsValid || i + 1 == m_phrases.end())    //  can not be the last word
 				return false;
 			thatIsValid = commaIsValid = false;
-			isConditionPart = dataIsValid = true;            //  after can be only data
+			isConditionPart = dataIsValid = quantityOfIsValid = true;            //  after can be only data
 		}
 		else if (*i == ",")
 		{
@@ -151,26 +164,33 @@ bool Request::IsCorrect() const
 			thatIsValid = commaIsValid = false;
 			dataIsValid = true;                              //  after can be only data
 		}
-		else if (isUnaryCondition(*i))
+		else if (*i == "is defined" || *i == "is undefined")
 		{
 			if (!conditionIsValid)
 				return false;
 			conditionIsValid = false;
 			andOrIsValid = true;                              //  after can be only and/or
 		}
-		else if (isBinaryCondition(*i))
+		else if (*i == "is" || *i == "is not")
 		{
 			if (!conditionIsValid || i + 1 == m_phrases.end())  //  can not be the last word
 				return false;
 			conditionIsValid = false;
 			valueIsValid = true;                              //  after acn be only value
 		}
-		else if (isAndOr(*i))
+		else if (*i == "is more than" || *i == "is less than")
+		{
+			if (!conditionIsValid || !moreLessIsValid || i + 1 == m_phrases.end())
+				return false;
+			conditionIsValid = moreLessIsValid = false;
+			valueIsValid = true;
+		}
+		else if (*i == "and" || *i == "or")
 		{
 			if (!andOrIsValid || i + 1 == m_phrases.end())    //  can not be the last word
 				return false;
 			andOrIsValid = false;
-			dataIsValid = true;                               //  after can be only data
+			dataIsValid = quantityOfIsValid = true;                               //  after can be only data
 		}
 		else if (*i == "close")
 		{
@@ -189,8 +209,7 @@ bool Request::IsCorrect() const
 			if (*(i - 2) == "phone" && !isPhoneNumber(*i))
 				return false;
 
-			if ((*(i - 1) == "is more than" || *(i - 1) == "is less than")
-				&& *(i - 2) != "last contacted date")
+			if ((*(i - 1) == "is more than" || *(i - 1) == "is less than") && !isNumber(*i))
 				return false;
 		}
 	}
@@ -219,24 +238,19 @@ bool Request::isKeyword(const std::string & word, bool partsOfPhrase) const
 	return std::find(m_keywordVector.begin(), end, temp) != end;
 }
 
-bool Request::isBinaryCondition(const std::string& s) const
+bool Request::isSpecialKeyword(const std::string& s) const
 {
-	return s == "is" || s == "is not" || s == "is more than" || s == "is less than";
+	return s == "all" || s == "is defined" || s == "is undefined" || s == "that" || s == "and" || s == "or";
 }
 
-bool Request::isUnaryCondition(const std::string& s) const
+bool Request::isNumber(const std::string& word) const
 {
-	return s == "is defined" || s == "is undefined";
-}
-
-bool Request::isAndOr(const std::string& s) const
-{
-	return s == "and" || s == "or";
-}
-
-bool Request::isValue(const std::string& word) const
-{
-	return !isKeyword(word) && !isData(word);
+	for (int i = 0; i < word.size(); ++i)
+	{
+		if (!isdigit(word[i]))
+			return false;
+	}
+	return true;
 }
 
 bool Request::isEmail(const std::string& word) const
@@ -305,8 +319,6 @@ void Request::getPhrases(std::vector<std::string>& tempArray)
 			if (isNotFirstKeyword)  //  is the continuation of the previous keyword
 			{
 				m_phrases.back() += ' ' + *i;
-				if (isUnaryCondition(m_phrases.back()))
-					isNotFirstKeyword = false;  //  after "is defined" / "is undefined" can be "or" / "and"
 			}
 			else // is first keyword
 			{
@@ -314,6 +326,8 @@ void Request::getPhrases(std::vector<std::string>& tempArray)
 				isNotFirstKeyword = true;
 				isNotFirstWord = false;
 			}
+			if (isSpecialKeyword(m_phrases.back()))
+				isNotFirstKeyword = false;  //  after "is defined" / "is undefined" can be "or" / "and"
 		}
 		else // is not keyword
 		{

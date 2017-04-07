@@ -44,10 +44,8 @@ public:
 private:
 	bool isData(const std::string&) const;
 	bool isKeyword(const std::string&, bool = false) const;
-	bool isBinaryCondition(const std::string&) const;
-	bool isUnaryCondition(const std::string&) const;
-	bool isAndOr(const std::string&) const;
-	bool isValue(const std::string&) const;
+	bool isSpecialKeyword(const std::string&) const;          //  keyword that after can be another keyword
+	bool isNumber(const std::string&) const;
 	bool isEmail(const std::string&) const;
 	bool isPhoneNumber(const std::string&) const;
 	void splitToWords(const std::string&, std::vector<std::string>&) const;
