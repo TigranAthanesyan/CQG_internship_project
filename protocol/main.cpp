@@ -1,8 +1,9 @@
 #include "protocol.h"
+#include "protocolTester.h"
 
 int main()
 {
-	Request request;
+  /*Request request;
 	request.Description();
 	request.DataDescription();
 	std::cin >> request;
@@ -11,5 +12,10 @@ int main()
 	std::cout << std::endl << request << std::endl << std::endl;
 	std::cout << "Request " << (request.IsCorrect() ? "is " : "is not ") << "correct" << std::endl << std::endl;
 	std::cin >> request;
-	}
+	}*/
+
+	RequestGenerator r;
+	std::string number = r.generatePhoneNumber();
+	std::string mail = r.generateMail();
+	std::cout << number << std::endl << mail << std::endl;
 }

@@ -21,9 +21,15 @@
     <ClCompile Include="protocol.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="protocolTester.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="protocol.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="protocolTester.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
