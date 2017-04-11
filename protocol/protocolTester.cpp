@@ -64,6 +64,7 @@ namespace
 		conditionKeywordVector.push_back("quantity of");
 		conditionKeywordVector.push_back("that");
 		conditionKeywordVector.push_back(",");
+		return conditionKeywordVector;
 	}
 }
 
@@ -111,16 +112,18 @@ std::string RequestGenerator::joinWords(const std::vector<std::string>& keywords
 std::string RequestGenerator::generatePhoneNumber() const
 {
 	std::string phoneNumber;
-	const int phoneNumberSize = 20;
-	std::srand(unsigned(std::time(0)));
+	const int maxPhoneNumberSize = 20;
+	srand(static_cast<int>(time(NULL)));
 
 	// first symbol can be only '+' or digit
 	int firstSymbol = std::rand() % 2;
-	phoneNumber += (firstSymbol * '+' + (1 - firstSymbol)*(std::rand() % 10 + '0'));
-
+	//phoneNumber += (firstSymbol * '+' + (1 - firstSymbol)*(rand() % 10 + '0'));
+	//  += 1 * '+'
+	//  += 1 * 
+	phoneNumber += (firstSymbol ? rand() % 10 + '0' : '+');
 	//next symbol can be only ' ' or digit
 	bool spaceIsValid = true;
-	int thisNumberSize = std::rand() % phoneNumberSize + 1;
+	int thisNumberSize = std::rand() % maxPhoneNumberSize + 1;
 	for (unsigned int i = 0; i < thisNumberSize; ++i)
 	{
 		int nextSymbol = std::rand() % 2;
@@ -139,40 +142,54 @@ std::string RequestGenerator::generatePhoneNumber() const
 	return phoneNumber;
 }
 
+std::string RequestGenerator::generateGlobalPhoneNumber() const
+{
+	std::string phoneNumber = "+";
+	srand(static_cast<int>(time(NULL)));
+	for (int i = 0; i < 3; ++i)
+		phoneNumber += '0' + rand() % 10;
+	phoneNumber += ' ';
+	const unsigned numberMinQuantity = 8;
+	unsigned numbersQuantity = rand() % numberMinQuantity + numberMinQuantity;
+	while (numbersQuantity --> 0)
+		phoneNumber += '0' + rand() % 10;
+	return phoneNumber;
+}
+
 std::string RequestGenerator::generateMail() const
 {
 	std::string mail;
-	const int betweenAtSymbolsSize = 20;
-	const int betweenDotSymbolsSize = 10;
-	const int afterDotSymbolsSize = 5;
+	const int beforeAtSymbolMaxSize = 20;
+	const int beforeDotSymbolMaxSize = 10;
+	const int afterDotSymbolMaxSize = 5;
 
-	std::srand(unsigned(std::time(0)));
+	srand(unsigned(std::time(0)));
 
-	std::string beforAtSymbols;
+	std::string beforeAtSymbols;
 	for (int i = 0; i < 26; ++i)
-		beforAtSymbols += 'a' + i;
+		beforeAtSymbols += 'a' + i;
 
 	for (int i = 0; i < 10; ++i)
-		beforAtSymbols += '0' + i;
+		beforeAtSymbols += '0' + i;
 
-	beforAtSymbols += "-_.";
+	beforeAtSymbols += "-_.";
 	int dummysSize = 3;
 
 	// before at can be digits, alpha and dummy symbols
 	bool dummyIsValid = false;
-	int thisMailBetweenAtSymbolsSize = std::rand() % betweenAtSymbolsSize + 1;
-	for (int i = 0; i < thisMailBetweenAtSymbolsSize; ++i)
+	int thisMailBeforeAtSymbolSize = rand() % beforeAtSymbolMaxSize + 1;
+	for (int i = 0; i < thisMailBeforeAtSymbolSize; ++i)
 	{
-		int nextSymbol = std::rand() % beforAtSymbols.size();
+		int nextSymbolIndex = rand() % beforeAtSymbols.size();
 
-		if ((nextSymbol > beforAtSymbols.size() - dummysSize - 1) && dummyIsValid)
+		if ((nextSymbolIndex > beforeAtSymbols.size() - dummysSize - 1) && dummyIsValid)
 		{
-			mail += beforAtSymbols[i];
+			mail += beforeAtSymbols[nextSymbolIndex];
 			dummyIsValid = false; // dummy isn't valid after dummy
 		}
 		else
 		{
-			mail += beforAtSymbols[std::rand() % 26];
+			mail += beforeAtSymbols[rand() % 26];
 			dummyIsValid = true;
 		}
 	}
@@ -180,16 +197,16 @@ std::string RequestGenerator::generateMail() const
 	mail += '@';
 
 	// after at can be only alpha symbols
-	int thisMailBetweenDotSymbolsSize = std::rand() % betweenDotSymbolsSize + 1;
-	for (int i = 0; i < thisMailBetweenDotSymbolsSize; ++i)
-		mail += ('a' + std::rand() % 26);
+	int thisMailBeforeDotSymbolSize = rand() % beforeDotSymbolMaxSize + 1;
+	for (int i = 0; i < thisMailBeforeDotSymbolSize; ++i)
+		mail += ('a' + rand() % 26);
 
 	mail += '.';
 
 	// after dot can be only alpha symbols
-	int thisMailAfterDotSymbolsSize = std::rand() % afterDotSymbolsSize + 1;
-	for (int i = 0; i < thisMailAfterDotSymbolsSize; ++i)
-		mail += ('a' + std::rand() % 26);
+	int thisMailAfterDotSymbolSize = rand() % afterDotSymbolMaxSize + 1;
+	for (int i = 0; i < thisMailAfterDotSymbolSize; ++i)
+		mail += ('a' + rand() % 26);
 
 	return mail;
 }

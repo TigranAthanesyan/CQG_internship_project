@@ -16,6 +16,7 @@ int main()
 
 	RequestGenerator r;
 	std::string number = r.generatePhoneNumber();
+	std::string g_number = r.generateGlobalPhoneNumber();
 	std::string mail = r.generateMail();
-	std::cout << number << std::endl << mail << std::endl;
+	std::cout << number << std::endl << g_number << std::endl << mail << std::endl;
 }

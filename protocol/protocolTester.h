@@ -22,6 +22,7 @@ public:
 //private:
 	std::string joinWords(const std::vector<std::string>& keywordsVector) const;
 	std::string generatePhoneNumber() const;
+	std::string generateGlobalPhoneNumber() const;
 	std::string generateMail() const;
 
 };
