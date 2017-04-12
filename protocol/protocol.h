@@ -30,7 +30,7 @@ public:
 		for (auto i = request.m_phrases.begin(); i != request.m_phrases.end(); ++i)
 		{
 			output << *i;
-			for (int count = i->size(); count < size; ++count)
+			for (size_t count = i->size(); count < size; ++count)
 				output << '-';
 			output << "------ " << (request.isKeyword(*i) ? "keyword" :
 				(request.isData(*i) ? "data" : "value")) << std::endl;

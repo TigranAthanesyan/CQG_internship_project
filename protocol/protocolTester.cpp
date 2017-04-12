@@ -1,5 +1,6 @@
 #include "protocolTester.h"
 
+
 //m_dataSet
 //m_keywordVector
 
@@ -69,89 +70,70 @@ namespace
 }
 
 ////////--TODO--////////
-std::string RequestGenerator::GenerateRequest() const
+std::string RequestGenerator::GenerateRequest()
 {
-	std::srand(unsigned(std::time(0)));
-	std::vector<std::string> keywordsVector;
-
-	bool allIsValid = true, isConditionPart = false, conditionIsValid = false;
-	bool dataIsValid = false, quantityOfIsValid = true, allowComma = true;
-	bool thatIsValid = false, commaIsValid = false, valueIsValid = false;
-	bool andOrIsValid = false, moreLessIsValid = false, closeIsValid = true;
-	bool mustBeAData = false;
-
-	// first part
-
-	const int firstPartSize = m_data.size() - 1;
-	for (int i = 0; i < firstPartSize - 1; ++i)
+	std::string request = " ";
+	ValidType nextType = m_wordMaker.GetNextType();
+	while (nextType != end)
 	{
-		int chooseVectorOfWords = std::rand() % 2;
-
-		if (chooseVectorOfWords == 1 || (mustBeAData && !isConditionPart)) // we are in m_data
+		switch (nextType)
 		{
-			keywordsVector.push_back(m_data[std::rand() % m_data.size()]);
-
-			// choose keyword "that" or ','
+		case all:
+			request += "all ";
+			break;
+		case quantityOf:
+			request += "quantity of ";
+			break;
+		case close:
+			request += "close ";
+			break;
+		case data:
+			request += "data ";
+			break;
+		case that:
+			request += "that ";
+			break;
+		case comma:
+			request += ", ";
+			break;
+		case is_isNot:
+			request += rand() % 2 ? "is " : "is not ";
+			break;
+		case isDefined_isUndefined:
+			request += rand() % 2 ? "is defined " : "is undefined ";
+			break;
+		case isMoreThan_isLessThan:
+			request += rand() % 2 ? "is more than " : "is less than ";
+			break;
+		case and_or:
+			request += rand() % 2 ? "and " : "or ";
+			break;
+		case value:
+			request += "value ";
+			break;
 		}
+		nextType = m_wordMaker.GetNextType();
 	}
-
-
-
-	return joinWords(keywordsVector);
+	m_wordMaker.Reset();
+	return request;
 }
 
-std::string RequestGenerator::joinWords(const std::vector<std::string>& keywordsVector) const
+std::string RequestGenerator::joinWords(const std::vector<std::string>& wordsVector) const
 {
 	std::string request;
-	for (unsigned int i = 0; i < keywordsVector.size(); ++i)
-		request += (keywordsVector[i] + ' ');
+	for (unsigned int i = 0; i < wordsVector.size(); ++i)
+		request += (wordsVector[i] + ' ');
 
 	return request;
 }
 
-std::string RequestGenerator::generatePhoneNumber() const
-{
-	std::string phoneNumber;
-	const int maxPhoneNumberSize = 20;
-	srand(static_cast<int>(time(NULL)));
-
-	// first symbol can be only '+' or digit
-	int firstSymbol = std::rand() % 2;
-	//phoneNumber += (firstSymbol * '+' + (1 - firstSymbol)*(rand() % 10 + '0'));
-	//  += 1 * '+'
-	//  += 1 * 
-	phoneNumber += (firstSymbol ? rand() % 10 + '0' : '+');
-	//next symbol can be only ' ' or digit
-	bool spaceIsValid = true;
-	int thisNumberSize = std::rand() % maxPhoneNumberSize + 1;
-	for (unsigned int i = 0; i < thisNumberSize; ++i)
-	{
-		int nextSymbol = std::rand() % 2;
-		if (nextSymbol == 0 && spaceIsValid)
-		{
-			phoneNumber += ' ';
-			spaceIsValid = false; // space isn't valid after space
-		}
-		else
-		{
-			phoneNumber += (std::rand() % 10 + '0');
-			spaceIsValid = true;
-		}
-	}
-
-	return phoneNumber;
-}
-
-std::string RequestGenerator::generateGlobalPhoneNumber() const
+std::string RequestGenerator::generatePhoneNumber(unsigned numberQuantity) const
 {
 	std::string phoneNumber = "+";
-	srand(static_cast<int>(time(NULL)));
 	for (int i = 0; i < 3; ++i)
 		phoneNumber += '0' + rand() % 10;
 	phoneNumber += ' ';
-	const unsigned numberMinQuantity = 8;
-	unsigned numbersQuantity = rand() % numberMinQuantity + numberMinQuantity;
-	while (numbersQuantity --> 0)
+	for(int i = 0; i < numberQuantity; ++i)
 		phoneNumber += '0' + rand() % 10;
 	return phoneNumber;
 }
@@ -161,56 +143,23 @@ std::string RequestGenerator::generateMail() const
 	std::string mail;
 	const int beforeAtSymbolMaxSize = 20;
 	const int beforeDotSymbolMaxSize = 10;
-	const int afterDotSymbolMaxSize = 5;
+	const int afterDotSymbolMaxSize = 3;
 
-	srand(unsigned(std::time(0)));
-
-	std::string beforeAtSymbols;
-	for (int i = 0; i < 26; ++i)
-		beforeAtSymbols += 'a' + i;
-
-	for (int i = 0; i < 10; ++i)
-		beforeAtSymbols += '0' + i;
-
-	beforeAtSymbols += "-_.";
-	int dummysSize = 3;
-
-	// before at can be digits, alpha and dummy symbols
-	bool dummyIsValid = false;
-	int thisMailBeforeAtSymbolSize = rand() % beforeAtSymbolMaxSize + 1;
-	for (int i = 0; i < thisMailBeforeAtSymbolSize; ++i)
-	{
-		int nextSymbolIndex = rand() % beforeAtSymbols.size();
-
-		if ((nextSymbolIndex > beforeAtSymbols.size() - dummysSize - 1) && dummyIsValid)
-		{
-			mail += beforeAtSymbols[nextSymbolIndex];
-			dummyIsValid = false; // dummy isn't valid after dummy
-		}
-		else
-		{
-			mail += beforeAtSymbols[rand() % 26];
-			dummyIsValid = true;
-		}
-	}
-
-	mail += '@';
-
-	// after at can be only alpha symbols
-	int thisMailBeforeDotSymbolSize = rand() % beforeDotSymbolMaxSize + 1;
-	for (int i = 0; i < thisMailBeforeDotSymbolSize; ++i)
-		mail += ('a' + rand() % 26);
-
-	mail += '.';
-
-	// after dot can be only alpha symbols
-	int thisMailAfterDotSymbolSize = rand() % afterDotSymbolMaxSize + 1;
-	for (int i = 0; i < thisMailAfterDotSymbolSize; ++i)
-		mail += ('a' + rand() % 26);
+	mail += generateWord(rand() % beforeAtSymbolMaxSize + 1) + '@';
+	mail += generateWord(rand() % beforeDotSymbolMaxSize + 1) + '.';
+	mail += generateWord(rand() % afterDotSymbolMaxSize + 1);
 
 	return mail;
 }
 
-std::vector<std::string> RequestGenerator::m_data = ::MakeDataVector();
+std::string RequestGenerator::generateWord(size_t size) const
+{
+	std::string word;
+	for (int i = 0; i < size; ++i)
+		word += rand() % 26 + 'a';
+	return word;
+}
+
+std::vector<std::string> RequestGenerator::m_dataVector = ::MakeDataVector();
 std::vector<std::string> RequestGenerator::m_firstPartKeywordsVector = ::MakeKeywordVectorFirstPart();
 std::vector<std::string> RequestGenerator::m_conditionPartKeywordsVector = ::MakeKeywordVectorConditionPart();
