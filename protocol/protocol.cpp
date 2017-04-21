@@ -117,7 +117,7 @@ bool Request::IsCorrect() const
 	bool dataIsValid = true, quantityOfIsValid = true, allowComma = true;
 	bool thatIsValid = false, commaIsValid = false, valueIsValid = false;
 	bool conditionIsValid = false, andOrIsValid = false, isConditionPart = false;
-	bool moreLessIsValid = false;
+	bool isQuantityOf = false;
 	std::string word;
 	for (auto i = m_phrases.begin(); i != m_phrases.end(); ++i)
 	{
@@ -133,8 +133,9 @@ bool Request::IsCorrect() const
 			if (!quantityOfIsValid || i + 1 == m_phrases.end())  // can not be the last word
 				return false;
 			quantityOfIsValid = allowComma = false;     // can not be the request like quantity of many data types
-			if (isConditionPart)
-				moreLessIsValid = true;
+			isQuantityOf = true;
+			//if (isConditionPart)
+			//moreLessIsValid = true;
 		}
 		else if (isData(*i))
 		{
@@ -154,7 +155,7 @@ bool Request::IsCorrect() const
 		{
 			if (!thatIsValid || i + 1 == m_phrases.end())    //  can not be the last word
 				return false;
-			thatIsValid = commaIsValid = false;
+			thatIsValid = commaIsValid = isQuantityOf = false;
 			isConditionPart = dataIsValid = quantityOfIsValid = true;            //  after can be only data
 		}
 		else if (*i == ",")
@@ -166,23 +167,23 @@ bool Request::IsCorrect() const
 		}
 		else if (*i == "is defined" || *i == "is undefined")
 		{
-			if (!conditionIsValid)
+			if (!conditionIsValid || isQuantityOf)
 				return false;
-			conditionIsValid = false;
+			conditionIsValid = isQuantityOf = false;
 			andOrIsValid = true;                              //  after can be only and/or
 		}
 		else if (*i == "is" || *i == "is not")
 		{
 			if (!conditionIsValid || i + 1 == m_phrases.end())  //  can not be the last word
 				return false;
-			conditionIsValid = false;
+			conditionIsValid = isQuantityOf = false;
 			valueIsValid = true;                              //  after acn be only value
 		}
 		else if (*i == "is more than" || *i == "is less than")
 		{
-			if (!conditionIsValid || !moreLessIsValid || i + 1 == m_phrases.end())
+			if (!conditionIsValid || !isQuantityOf || i + 1 == m_phrases.end())
 				return false;
-			conditionIsValid = moreLessIsValid = false;
+			conditionIsValid = isQuantityOf = false;
 			valueIsValid = true;
 		}
 		else if (*i == "and" || *i == "or")
@@ -201,7 +202,7 @@ bool Request::IsCorrect() const
 		{
 			if (!valueIsValid)
 				return false;
-			valueIsValid = false;
+			valueIsValid = isQuantityOf = false;
 			andOrIsValid = true;                              //  after can be only and/or
 
 			if ((*(i - 2) == "work e-mail" || *(i - 2) == "home e-mail") && !isEmail(*i))

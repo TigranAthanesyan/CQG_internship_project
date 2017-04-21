@@ -12,7 +12,7 @@
 
 #define TYPE_SIZE 12
 
-enum ValidType
+enum WordType
 {
 	all,
 	quantityOf,
@@ -28,10 +28,20 @@ enum ValidType
 	end
 };
 
-class ValidWordMaker
+enum ValueType
+{
+	name,
+	mr_mrs,
+	phone,
+	number,
+	e_mail,
+	undefined
+};
+
+class ValidWordTypeMaker
 {
 public:
-	ValidWordMaker() : m_bitSet(std::bitset<TYPE_SIZE>(15))   //  15 - 000000001111     all, quantityOf, close, data is true
+	ValidWordTypeMaker() : m_bitSet(std::bitset<TYPE_SIZE>(15))   //  15 - 000000001111     all, quantityOf, close, data is true
 	{
 		srand(static_cast<int>(time(NULL)));
 		ResetIndexVector();
@@ -43,12 +53,14 @@ public:
 		m_canBeMoreLess = false;
 		ResetIndexVector();
 	}
-	ValidType GetNextType()
+	WordType GetNextType()
 	{
 		if (!m_indexVector.size())
 			return end;
+
 		int nextIndex = rand() % m_indexVector.size();
-		ValidType nextType = static_cast<ValidType>(m_indexVector[nextIndex]);
+		WordType nextType = static_cast<WordType>(m_indexVector[nextIndex]);
+
 		switch (nextType)
 		{
 		case all:   // true types: all, quantityOf, close, data
@@ -63,7 +75,7 @@ public:
 			}
 			else   //   true types: all, quantityOf, close, data
 			{
-				m_bitSet[all] = m_bitSet[quantityOf] = m_bitSet[close] = false;
+				m_bitSet[all] = m_bitSet[quantityOf] = m_bitSet[close] = m_allowComma = false;
 			}
 			break;
 		case close:  //  true types: all, quantityOf, close, data
@@ -80,12 +92,13 @@ public:
 					m_canBeMoreLess = false;
 				}
 				else
-				    m_bitSet[is_isNot] = m_bitSet[isDefined_isUndefined] = true;
+					m_bitSet[is_isNot] = m_bitSet[isDefined_isUndefined] = true;
 			}
 			else     //  true types: all, quantityOf, close, data
 			{
 				m_bitSet[all] = m_bitSet[quantityOf] = m_bitSet[close] = m_bitSet[data] = false;
-				m_bitSet[that] = m_bitSet[comma] = m_bitSet[end] = true;
+				m_bitSet[that] = m_bitSet[end] = true;
+				m_bitSet[comma] = m_allowComma;
 			}
 			break;
 		case that:  //  true types: that, comma, end
@@ -139,9 +152,8 @@ private:
 	std::vector<int> m_indexVector;
 	bool m_isConditionPart = false;
 	bool m_canBeMoreLess = false;
+	bool m_allowComma = true;
 };
-
-
 
 class RequestGenerator
 {
@@ -149,19 +161,16 @@ public:
 	RequestGenerator() { srand(static_cast<int>(time(NULL))); }
 	std::string GenerateRequest();
 
-
 	static std::vector<std::string> m_dataVector;
-	static std::vector<std::string> m_firstPartKeywordsVector;
-	static std::vector<std::string> m_conditionPartKeywordsVector;
 
-//private:
+private:
 	std::string joinWords(const std::vector<std::string>&) const;
+	std::string generateData() const;
 	std::string generatePhoneNumber(unsigned = 8) const;
+	std::string generateNumber(int, int) const;
 	std::string generateMail() const;
-	std::string generateWord(size_t) const;
+	std::string generateWord(size_t, bool = false) const;
 
-	ValidWordMaker m_wordMaker;
-
+	ValidWordTypeMaker m_typeMaker;
 };
-
 #endif // PROTOCOLTESTER_H

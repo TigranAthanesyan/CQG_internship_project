@@ -1,9 +1,5 @@
 #include "protocolTester.h"
 
-
-//m_dataSet
-//m_keywordVector
-
 namespace
 {
 	std::vector<std::string> MakeDataVector()
@@ -36,44 +32,45 @@ namespace
 		return dataVector;
 	}
 
-	std::vector<std::string> MakeKeywordVectorFirstPart()
+	/*std::vector<std::string> MakeKeywordVectorFirstPart()
 	{
-		//  pushing keywords
-		std::vector<std::string> keywordVector;
-		keywordVector.push_back("all");
-		keywordVector.push_back("that");
-		keywordVector.push_back("quantity of");
-		keywordVector.push_back(",");
-		keywordVector.push_back("close");
-		return keywordVector;
+	//  pushing keywords
+	std::vector<std::string> keywordVector;
+	keywordVector.push_back("all");
+	keywordVector.push_back("that");
+	keywordVector.push_back("quantity of");
+	keywordVector.push_back(",");
+	keywordVector.push_back("close");
+	return keywordVector;
 	}
 
 	std::vector<std::string> MakeKeywordVectorConditionPart()
 	{
-		//  pushing condition keywords
-		std::vector<std::string> conditionKeywordVector;
-		conditionKeywordVector.push_back("is");
-		conditionKeywordVector.push_back("or");
-		conditionKeywordVector.push_back("and");
-		conditionKeywordVector.push_back("is not");
-		conditionKeywordVector.push_back("is more than");
-		conditionKeywordVector.push_back("is less than");
-		conditionKeywordVector.push_back("is defined");
-		conditionKeywordVector.push_back("is undefined");
+	//  pushing condition keywords
+	std::vector<std::string> conditionKeywordVector;
+	conditionKeywordVector.push_back("is");
+	conditionKeywordVector.push_back("or");
+	conditionKeywordVector.push_back("and");
+	conditionKeywordVector.push_back("is not");
+	conditionKeywordVector.push_back("is more than");
+	conditionKeywordVector.push_back("is less than");
+	conditionKeywordVector.push_back("is defined");
+	conditionKeywordVector.push_back("is undefined");
 
-		// can be in condition part too
-		conditionKeywordVector.push_back("quantity of");
-		conditionKeywordVector.push_back("that");
-		conditionKeywordVector.push_back(",");
-		return conditionKeywordVector;
-	}
+	// can be in condition part too
+	conditionKeywordVector.push_back("quantity of");
+	conditionKeywordVector.push_back("that");
+	conditionKeywordVector.push_back(",");
+	return conditionKeywordVector;
+	}*/
 }
 
-////////--TODO--////////
 std::string RequestGenerator::GenerateRequest()
 {
-	std::string request = " ";
-	ValidType nextType = m_wordMaker.GetNextType();
+	std::string request;
+	WordType nextType = m_typeMaker.GetNextType();
+	ValueType nextValueType = undefined;
+
 	while (nextType != end)
 	{
 		switch (nextType)
@@ -83,15 +80,31 @@ std::string RequestGenerator::GenerateRequest()
 			break;
 		case quantityOf:
 			request += "quantity of ";
+			nextValueType = number;
 			break;
 		case close:
 			request += "close ";
 			break;
 		case data:
-			request += "data ";
+		{
+			std::string data = generateData();
+			request += data + ' ';
+			if (nextValueType != number)
+			{
+				if (data == "last name" || data == "first name" || data == "city" || data == "state" || data == "country")
+					nextValueType = name;
+				else if (data == "mr. / mrs.")
+					nextValueType = mr_mrs;
+				else if (data == "phone")
+					nextValueType = phone;
+				else if (data == "home e-mail" || data == "work e-mail")
+					nextValueType = e_mail;
+			}
 			break;
+		}
 		case that:
 			request += "that ";
+			nextValueType = undefined;
 			break;
 		case comma:
 			request += ", ";
@@ -101,6 +114,7 @@ std::string RequestGenerator::GenerateRequest()
 			break;
 		case isDefined_isUndefined:
 			request += rand() % 2 ? "is defined " : "is undefined ";
+			nextValueType = undefined;
 			break;
 		case isMoreThan_isLessThan:
 			request += rand() % 2 ? "is more than " : "is less than ";
@@ -109,12 +123,33 @@ std::string RequestGenerator::GenerateRequest()
 			request += rand() % 2 ? "and " : "or ";
 			break;
 		case value:
-			request += "value ";
+			switch (nextValueType)
+			{
+			case name:
+				request += generateWord(rand() % 10 + 2, true) + ' ';
+				break;
+			case mr_mrs:
+				request += rand() % 2 ? "mr " : "mrs ";
+				break;
+			case phone:
+				request += generatePhoneNumber() + ' ';
+				break;
+			case number:
+				request += generateNumber(1, 20) + ' ';
+				break;
+			case e_mail:
+				request += generateMail() + ' ';
+				break;
+			case undefined:
+				request += generateWord(rand() % 10 + 2) + ' ';
+				break;
+			}
+			nextValueType = undefined;
 			break;
 		}
-		nextType = m_wordMaker.GetNextType();
+		nextType = m_typeMaker.GetNextType();
 	}
-	m_wordMaker.Reset();
+	m_typeMaker.Reset();
 	return request;
 }
 
@@ -127,15 +162,27 @@ std::string RequestGenerator::joinWords(const std::vector<std::string>& wordsVec
 	return request;
 }
 
+std::string RequestGenerator::generateData() const
+{
+	int dataIndex = rand() % m_dataVector.size();
+	return m_dataVector[dataIndex];
+}
+
 std::string RequestGenerator::generatePhoneNumber(unsigned numberQuantity) const
 {
 	std::string phoneNumber = "+";
 	for (int i = 0; i < 3; ++i)
 		phoneNumber += '0' + rand() % 10;
 	phoneNumber += ' ';
-	for(int i = 0; i < numberQuantity; ++i)
+	for (int i = 0; i < numberQuantity; ++i)
 		phoneNumber += '0' + rand() % 10;
 	return phoneNumber;
+}
+
+std::string RequestGenerator::generateNumber(int min, int max) const
+{
+	int number = rand() % (max - min) + min;
+	return std::to_string(number);
 }
 
 std::string RequestGenerator::generateMail() const
@@ -152,14 +199,14 @@ std::string RequestGenerator::generateMail() const
 	return mail;
 }
 
-std::string RequestGenerator::generateWord(size_t size) const
+std::string RequestGenerator::generateWord(size_t size, bool startWithCapital) const
 {
 	std::string word;
 	for (int i = 0; i < size; ++i)
 		word += rand() % 26 + 'a';
+	if (startWithCapital)
+		word[0] = toupper(word[0]);
 	return word;
 }
 
 std::vector<std::string> RequestGenerator::m_dataVector = ::MakeDataVector();
-std::vector<std::string> RequestGenerator::m_firstPartKeywordsVector = ::MakeKeywordVectorFirstPart();
-std::vector<std::string> RequestGenerator::m_conditionPartKeywordsVector = ::MakeKeywordVectorConditionPart();
