@@ -3,17 +3,15 @@
 
 int main()
 {
-	RequestGenerator requestGenerator;
 	Request request;
-	std::string requestText;
-
+	request.Description();
+	request.DataDescription();
+	std::cin >> request;
 	while (!request.Close())
 	{
-		requestText = requestGenerator.GenerateRequest();
-		request.SetText(requestText);
-		std::cout << requestText << std::endl << std::endl << request << std::endl;
+		std::cout << std::endl << request << std::endl << std::endl;
 		std::cout << "Request " << (request.IsCorrect() ? "is " : "is not ") << "correct" << std::endl << std::endl;
-		std::cin.get();
+		std::cin >> request;
 	}
 }
 
@@ -27,3 +25,18 @@ std::cout << std::endl << request << std::endl << std::endl;
 std::cout << "Request " << (request.IsCorrect() ? "is " : "is not ") << "correct" << std::endl << std::endl;
 std::cin >> request;
 }*/
+
+/*
+RequestGenerator requestGenerator;
+Request request;
+std::string requestText;
+
+while (!request.Close())
+{
+requestText = requestGenerator.GenerateRequest();
+request.SetText(requestText);
+std::cout << requestText << std::endl << std::endl << request << std::endl;
+std::cout << "Request " << (request.IsCorrect() ? "is " : "is not ") << "correct" << std::endl << std::endl;
+std::cin.get();
+}
+*/

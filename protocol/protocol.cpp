@@ -205,9 +205,9 @@ bool Request::IsCorrect() const
 			valueIsValid = isQuantityOf = false;
 			andOrIsValid = true;                              //  after can be only and/or
 
-			if ((*(i - 2) == "work e-mail" || *(i - 2) == "home e-mail") && !isEmail(*i))
+			if ((*(i - 2) == "work e-mail" || *(i - 2) == "home e-mail") && !isEmail(*i) && *(i - 3) != "quantity of")
 				return false;
-			if (*(i - 2) == "phone" && !isPhoneNumber(*i))
+			if (*(i - 2) == "phone" && !isPhoneNumber(*i) && *(i - 3) != "quantity of")
 				return false;
 
 			if ((*(i - 1) == "is more than" || *(i - 1) == "is less than") && !isNumber(*i))
