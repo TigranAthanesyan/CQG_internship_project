@@ -24,7 +24,7 @@ public:
 		request.SetText(text);
 		return input;
 	}
-	friend std::ostream& operator <<(std::ostream& output, const Request& request)// outputs the content to the file stream
+	friend std::ostream& operator <<(std::ostream& output, const Request& request) // outputs the content to the file stream
 	{
 		size_t size = request.maximumSize();
 		for (auto i = request.m_phrases.begin(); i != request.m_phrases.end(); ++i)

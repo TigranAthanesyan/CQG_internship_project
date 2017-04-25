@@ -1,6 +1,8 @@
 *.VC.db
 *.VC.opendb
 
+*.opensdf
+
 .vs/
 
 **/[Dd]ebug

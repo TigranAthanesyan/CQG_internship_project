@@ -276,13 +276,22 @@ bool Request::isEmail(const std::string& word) const
 
 bool Request::isPhoneNumber(const std::string& word) const
 {
-	if (word[0] != '+' && !isdigit(word[0]))
+	if ((word[0] != '+' && !isdigit(word[0])) || word.size() < 10)
 		return false;
 	bool spaceIsValid = true;
 	for (int i = 1; i < word.size(); ++i)
 	{
-		if (word[i] != ' ' && !isdigit(word[i]))
-			return false;
+		if (isdigit(word[i]))
+		{
+			spaceIsValid = true;
+			continue;
+		}
+		if (word[i] != ' ' && spaceIsValid)
+		{
+			spaceIsValid = false;
+			continue;
+		}
+		return false;
 	}
 	return true;
 }

@@ -1,68 +1,143 @@
 #include "protocolTester.h"
+#include <random>
 
-namespace
+std::vector<std::string> MakeDataVector()
 {
-	std::vector<std::string> MakeDataVector()
+	std::vector<std::string> dataVector;
+	dataVector.push_back("last name");
+	dataVector.push_back("first name");
+	dataVector.push_back("mr. / mrs.");
+	dataVector.push_back("acct. name");
+	dataVector.push_back("phone");
+	dataVector.push_back("home e-mail");
+	dataVector.push_back("type");
+	dataVector.push_back("industry segment");
+	dataVector.push_back("work e-mail");
+	dataVector.push_back("address");
+	dataVector.push_back("city");
+	dataVector.push_back("state");
+	dataVector.push_back("postal code");
+	dataVector.push_back("country");
+	dataVector.push_back("last contacted date");
+	dataVector.push_back("referral type");
+	dataVector.push_back("referral detail");
+	dataVector.push_back("sales rep.");
+	dataVector.push_back("sales rep. login");
+	dataVector.push_back("company office");
+	dataVector.push_back("trs admin");
+	dataVector.push_back("auth to trade");
+	dataVector.push_back("job title");
+	dataVector.push_back("contact id");
+	return dataVector;
+}
+
+ValidWordTypeMaker::ValidWordTypeMaker()
+	: m_bitSet(std::bitset<TYPE_SIZE>(15))   // 15 - 000000001111    all, quantityOf, close, data is true
+{
+	srand(static_cast<int>(time(NULL)));
+	ResetIndexVector();
+}
+
+void ValidWordTypeMaker::Reset()
+{
+	m_bitSet = std::bitset<TYPE_SIZE>(15);
+	m_isConditionPart = m_canBeMoreLess = false;
+	m_allowComma = true;
+	ResetIndexVector();
+}
+
+WordType ValidWordTypeMaker::GetNextType()
+{
+	if (!m_indexVector.size())
+		return end;
+
+	int nextIndex = rand() % m_indexVector.size();
+	WordType nextType = static_cast<WordType>(m_indexVector[nextIndex]);
+
+	switch (nextType)
 	{
-		std::vector<std::string> dataVector;
-		dataVector.push_back("last name");
-		dataVector.push_back("first name");
-		dataVector.push_back("mr. / mrs.");
-		dataVector.push_back("acct. name");
-		dataVector.push_back("phone");
-		dataVector.push_back("home e-mail");
-		dataVector.push_back("type");
-		dataVector.push_back("industry segment");
-		dataVector.push_back("work e-mail");
-		dataVector.push_back("address");
-		dataVector.push_back("city");
-		dataVector.push_back("state");
-		dataVector.push_back("postal code");
-		dataVector.push_back("country");
-		dataVector.push_back("last contacted date");
-		dataVector.push_back("referral type");
-		dataVector.push_back("referral detail");
-		dataVector.push_back("sales rep.");
-		dataVector.push_back("sales rep. login");
-		dataVector.push_back("company office");
-		dataVector.push_back("trs admin");
-		dataVector.push_back("auth to trade");
-		dataVector.push_back("job title");
-		dataVector.push_back("contact id");
-		return dataVector;
+	case all:   // true types: all, quantityOf, close, data
+		m_bitSet[all] = m_bitSet[quantityOf] = m_bitSet[close] = m_bitSet[data] = false;
+		m_bitSet[that] = m_bitSet[end] = true;
+		break;
+	case quantityOf:
+		if (m_isConditionPart)   //  true types: quantityOf, data
+		{
+			m_bitSet[quantityOf] = false;
+			m_canBeMoreLess = true;
+		}
+		else   //   true types: all, quantityOf, close, data
+		{
+			m_bitSet[all] = m_bitSet[quantityOf] = m_bitSet[close] = m_allowComma = false;
+		}
+		break;
+	case close:  //  true types: all, quantityOf, close, data
+		m_bitSet[all] = m_bitSet[quantityOf] = m_bitSet[close] = m_bitSet[data] = false;
+		m_bitSet[end] = true;
+		break;
+	case data:
+		if (m_isConditionPart)   //  true types: data, quantityOf
+		{
+			m_bitSet[data] = m_bitSet[quantityOf] = false;
+			if (m_canBeMoreLess)
+			{
+				m_bitSet[is_isNot] = m_bitSet[isMoreThan_isLessThan] = true;
+				m_canBeMoreLess = false;
+			}
+			else
+				m_bitSet[is_isNot] = m_bitSet[isDefined_isUndefined] = true;
+		}
+		else     //  true types: all, quantityOf, close, data
+		{
+			m_bitSet[all] = m_bitSet[quantityOf] = m_bitSet[close] = m_bitSet[data] = false;
+			m_bitSet[that] = m_bitSet[end] = true;
+			m_bitSet[comma] = m_allowComma;
+		}
+		break;
+	case that:  //  true types: that, comma, end
+		m_bitSet[that] = m_bitSet[comma] = m_bitSet[end] = false;
+		m_bitSet[data] = m_bitSet[quantityOf] = m_isConditionPart = true;
+		break;
+	case comma:    //  true types: comma, that, end
+		m_bitSet[comma] = m_bitSet[that] = m_bitSet[end] = false;
+		m_bitSet[data] = true;
+		break;
+	case is_isNot:  //  true types: is_isNot, isDefined_isUndefined, isMoreThan_isLessThan
+		m_bitSet[is_isNot] = m_bitSet[isDefined_isUndefined] = m_bitSet[isMoreThan_isLessThan] = false;
+		m_bitSet[value] = true;
+		break;
+	case isDefined_isUndefined:   //  true types: is_isNot, isDefined_isUndefined
+		m_bitSet[is_isNot] = m_bitSet[isDefined_isUndefined] = false;
+		m_bitSet[and_or] = m_bitSet[end] = true;
+		break;
+	case isMoreThan_isLessThan:   // true types: is_isNot, isMoreThan_isLessThan
+		m_bitSet[is_isNot] = m_bitSet[isMoreThan_isLessThan] = false;
+		m_bitSet[value] = true;
+		break;
+	case and_or:   //  true types: and_or, end
+		m_bitSet[and_or] = m_bitSet[end] = false;
+		m_bitSet[data] = m_bitSet[quantityOf] = true;
+		break;
+	case value:   //   true types: value
+		m_bitSet[value] = false;
+		m_bitSet[and_or] = m_bitSet[end] = true;
+		break;
+	case end:  //  true types: that, comma, end, and_or
+		m_bitSet[that] = m_bitSet[comma] = m_bitSet[end] = m_bitSet[and_or] = false;
+		break;
 	}
+	ResetIndexVector();
+	return nextType;
+}
 
-	/*std::vector<std::string> MakeKeywordVectorFirstPart()
+void ValidWordTypeMaker::ResetIndexVector()
+{
+	m_indexVector.clear();
+	for (int i = 0; i < TYPE_SIZE; ++i)
 	{
-	//  pushing keywords
-	std::vector<std::string> keywordVector;
-	keywordVector.push_back("all");
-	keywordVector.push_back("that");
-	keywordVector.push_back("quantity of");
-	keywordVector.push_back(",");
-	keywordVector.push_back("close");
-	return keywordVector;
+		if (m_bitSet[i])
+			m_indexVector.push_back(i);
 	}
-
-	std::vector<std::string> MakeKeywordVectorConditionPart()
-	{
-	//  pushing condition keywords
-	std::vector<std::string> conditionKeywordVector;
-	conditionKeywordVector.push_back("is");
-	conditionKeywordVector.push_back("or");
-	conditionKeywordVector.push_back("and");
-	conditionKeywordVector.push_back("is not");
-	conditionKeywordVector.push_back("is more than");
-	conditionKeywordVector.push_back("is less than");
-	conditionKeywordVector.push_back("is defined");
-	conditionKeywordVector.push_back("is undefined");
-
-	// can be in condition part too
-	conditionKeywordVector.push_back("quantity of");
-	conditionKeywordVector.push_back("that");
-	conditionKeywordVector.push_back(",");
-	return conditionKeywordVector;
-	}*/
 }
 
 std::string RequestGenerator::GenerateRequest()
@@ -170,19 +245,16 @@ std::string RequestGenerator::generateData() const
 
 std::string RequestGenerator::generatePhoneNumber(unsigned numberQuantity) const
 {
-	std::string phoneNumber = "+";
-	for (int i = 0; i < 3; ++i)
-		phoneNumber += '0' + rand() % 10;
-	phoneNumber += ' ';
-	for (int i = 0; i < numberQuantity; ++i)
-		phoneNumber += '0' + rand() % 10;
-	return phoneNumber;
+	std::random_device rd;
+	std::mt19937 randomNumber(rd());
+	std::uniform_int_distribution<int> areaCode(100, 999);
+	std::uniform_int_distribution<int> phoneNumber(pow(10, numberQuantity - 1), pow(10, numberQuantity) - 1);
+	return "+" + std::to_string(areaCode(randomNumber)) + " " + std::to_string(phoneNumber(randomNumber));
 }
 
 std::string RequestGenerator::generateNumber(int min, int max) const
 {
-	int number = rand() % (max - min) + min;
-	return std::to_string(number);
+	return std::to_string(rand() % (max - min) + min);
 }
 
 std::string RequestGenerator::generateMail() const
@@ -209,4 +281,4 @@ std::string RequestGenerator::generateWord(size_t size, bool startWithCapital) c
 	return word;
 }
 
-std::vector<std::string> RequestGenerator::m_dataVector = ::MakeDataVector();
+std::vector<std::string> RequestGenerator::m_dataVector = MakeDataVector();
