@@ -4,7 +4,6 @@
 #include <vector>
 #include <iterator>
 #include <algorithm>
-#include <ctime>
 #include <bitset>
 
 #ifndef PROTOCOLTESTER_H
@@ -12,7 +11,7 @@
 
 #define TYPE_SIZE 12
 
-enum WordType
+enum WordType  //  possible types of words
 {
 	all,
 	quantityOf,
@@ -28,7 +27,7 @@ enum WordType
 	end
 };
 
-enum ValueType
+enum ValueType  //  possible types of value
 {
 	name,
 	mr_mrs,
@@ -46,30 +45,29 @@ public:
 	WordType GetNextType();
 
 private:
-	void ResetIndexVector();
+	void resetIndexVector();
 
-	std::bitset<TYPE_SIZE> m_bitSet;
-	std::vector<int> m_indexVector;
-	bool m_isConditionPart = false;
-	bool m_canBeMoreLess = false;
-	bool m_allowComma = true;
+	std::bitset<TYPE_SIZE> m_bitSet; // contains bool values to show valid word types
+	std::vector<int> m_indexVector;  // contains the numbers of bitset which are true
+	bool m_isConditionPart = false;  // turns to true after keyword "that"
+	bool m_canBeMoreLess = false;    // turns to true after keyword "quantity of"
+	bool m_allowComma = true;        // turns to false after keyword "quantity of"
 };
 
 class RequestGenerator
 {
 public:
-	RequestGenerator() { srand(static_cast<int>(time(NULL))); }
+	RequestGenerator() {};
 	std::string GenerateRequest();
 
 	static std::vector<std::string> m_dataVector;
 
 private:
-	std::string joinWords(const std::vector<std::string>&) const;
 	std::string generateData() const;
-	std::string generatePhoneNumber(unsigned = 8) const;
-	std::string generateNumber(int, int) const;
+	std::string generatePhoneNumber(const unsigned = 8) const;
+	std::string generateNumber(const int, const int) const;
 	std::string generateMail() const;
-	std::string generateWord(size_t, bool = false) const;
+	std::string generateWord(const size_t, bool = false) const;
 
 	ValidWordTypeMaker m_typeMaker;
 };

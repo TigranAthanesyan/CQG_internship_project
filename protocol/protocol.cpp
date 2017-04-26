@@ -99,11 +99,6 @@ void Request::DataDescription(std::ostream& output) const
 	output << "-------------------------------------------------------------------------" << std::endl << std::endl;
 }
 
-void Request::Clear()
-{
-	m_phrases.clear();
-}
-
 void Request::SetText(const std::string& text)
 {
 	std::vector<std::string> tempArray;
@@ -134,8 +129,6 @@ bool Request::IsCorrect() const
 				return false;
 			quantityOfIsValid = allowComma = false;     // can not be the request like quantity of many data types
 			isQuantityOf = true;
-			//if (isConditionPart)
-			//moreLessIsValid = true;
 		}
 		else if (isData(*i))
 		{
@@ -191,7 +184,7 @@ bool Request::IsCorrect() const
 			if (!andOrIsValid || i + 1 == m_phrases.end())    //  can not be the last word
 				return false;
 			andOrIsValid = false;
-			dataIsValid = quantityOfIsValid = true;                               //  after can be only data
+			dataIsValid = quantityOfIsValid = true;           //  after can be only data
 		}
 		else if (*i == "close")
 		{

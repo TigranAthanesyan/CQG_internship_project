@@ -1,6 +1,15 @@
 #include "protocolTester.h"
 #include <random>
 
+// returns random number from the range
+int RandomNumber(const int min, const int max)
+{
+	std::random_device rd;
+	std::mt19937 randomNumber(rd());
+	std::uniform_int_distribution<int> range(min, max);
+	return range(randomNumber);
+}
+
 std::vector<std::string> MakeDataVector()
 {
 	std::vector<std::string> dataVector;
@@ -32,28 +41,29 @@ std::vector<std::string> MakeDataVector()
 }
 
 ValidWordTypeMaker::ValidWordTypeMaker()
-	: m_bitSet(std::bitset<TYPE_SIZE>(15))   // 15 - 000000001111    all, quantityOf, close, data is true
+     // 15 - 000000001111  at first can be only keywords "all", "quantityOf", "close", "data"
+	: m_bitSet(std::bitset<TYPE_SIZE>(15)) 
 {
-	srand(static_cast<int>(time(NULL)));
-	ResetIndexVector();
+	resetIndexVector();
 }
 
-void ValidWordTypeMaker::Reset()
+void ValidWordTypeMaker::Reset()    // turns the object to the first state
 {
 	m_bitSet = std::bitset<TYPE_SIZE>(15);
 	m_isConditionPart = m_canBeMoreLess = false;
 	m_allowComma = true;
-	ResetIndexVector();
+	resetIndexVector();
 }
 
-WordType ValidWordTypeMaker::GetNextType()
+WordType ValidWordTypeMaker::GetNextType()   //  returns one of the possible word types
 {
 	if (!m_indexVector.size())
 		return end;
 
-	int nextIndex = rand() % m_indexVector.size();
+	int nextIndex = RandomNumber(0, m_indexVector.size() - 1);
 	WordType nextType = static_cast<WordType>(m_indexVector[nextIndex]);
 
+	// before returning the type we need to change some settings about which type can be next
 	switch (nextType)
 	{
 	case all:   // true types: all, quantityOf, close, data
@@ -126,11 +136,12 @@ WordType ValidWordTypeMaker::GetNextType()
 		m_bitSet[that] = m_bitSet[comma] = m_bitSet[end] = m_bitSet[and_or] = false;
 		break;
 	}
-	ResetIndexVector();
+	resetIndexVector();
 	return nextType;
 }
 
-void ValidWordTypeMaker::ResetIndexVector()
+// every time after changing the bitset we need to reset index vector
+void ValidWordTypeMaker::resetIndexVector()
 {
 	m_indexVector.clear();
 	for (int i = 0; i < TYPE_SIZE; ++i)
@@ -143,8 +154,8 @@ void ValidWordTypeMaker::ResetIndexVector()
 std::string RequestGenerator::GenerateRequest()
 {
 	std::string request;
-	WordType nextType = m_typeMaker.GetNextType();
-	ValueType nextValueType = undefined;
+	WordType nextType = m_typeMaker.GetNextType(); // getting the next type
+	ValueType nextValueType = undefined;           // will change after any data
 
 	while (nextType != end)
 	{
@@ -155,7 +166,7 @@ std::string RequestGenerator::GenerateRequest()
 			break;
 		case quantityOf:
 			request += "quantity of ";
-			nextValueType = number;
+			nextValueType = number; // only in this case the following value will be number
 			break;
 		case close:
 			request += "close ";
@@ -164,6 +175,7 @@ std::string RequestGenerator::GenerateRequest()
 		{
 			std::string data = generateData();
 			request += data + ' ';
+			// we need to check the value, if it is not a quantity of something
 			if (nextValueType != number)
 			{
 				if (data == "last name" || data == "first name" || data == "city" || data == "state" || data == "country")
@@ -185,26 +197,26 @@ std::string RequestGenerator::GenerateRequest()
 			request += ", ";
 			break;
 		case is_isNot:
-			request += rand() % 2 ? "is " : "is not ";
+			request += RandomNumber(0, 1) ? "is " : "is not ";
 			break;
 		case isDefined_isUndefined:
-			request += rand() % 2 ? "is defined " : "is undefined ";
+			request += RandomNumber(0, 1) ? "is defined " : "is undefined ";
 			nextValueType = undefined;
 			break;
 		case isMoreThan_isLessThan:
-			request += rand() % 2 ? "is more than " : "is less than ";
+			request += RandomNumber(0, 1) ? "is more than " : "is less than ";
 			break;
 		case and_or:
-			request += rand() % 2 ? "and " : "or ";
+			request += RandomNumber(0, 1) ? "and " : "or ";
 			break;
 		case value:
 			switch (nextValueType)
 			{
 			case name:
-				request += generateWord(rand() % 10 + 2, true) + ' ';
+				request += generateWord(RandomNumber(2, 16), true) + ' ';
 				break;
 			case mr_mrs:
-				request += rand() % 2 ? "mr " : "mrs ";
+				request += RandomNumber(0, 1) ? "mr " : "mrs ";
 				break;
 			case phone:
 				request += generatePhoneNumber() + ' ';
@@ -216,7 +228,7 @@ std::string RequestGenerator::GenerateRequest()
 				request += generateMail() + ' ';
 				break;
 			case undefined:
-				request += generateWord(rand() % 10 + 2) + ' ';
+				request += generateWord(RandomNumber(4, 16)) + ' ';
 				break;
 			}
 			nextValueType = undefined;
@@ -228,54 +240,42 @@ std::string RequestGenerator::GenerateRequest()
 	return request;
 }
 
-std::string RequestGenerator::joinWords(const std::vector<std::string>& wordsVector) const
+std::string RequestGenerator::generateData() const // returns random data name
 {
-	std::string request;
-	for (unsigned int i = 0; i < wordsVector.size(); ++i)
-		request += (wordsVector[i] + ' ');
-
-	return request;
-}
-
-std::string RequestGenerator::generateData() const
-{
-	int dataIndex = rand() % m_dataVector.size();
+	int dataIndex = RandomNumber(0, m_dataVector.size() - 1);
 	return m_dataVector[dataIndex];
 }
 
-std::string RequestGenerator::generatePhoneNumber(unsigned numberQuantity) const
+std::string RequestGenerator::generatePhoneNumber(const unsigned numberQuantity) const // returns random phone number
 {
-	std::random_device rd;
-	std::mt19937 randomNumber(rd());
-	std::uniform_int_distribution<int> areaCode(100, 999);
-	std::uniform_int_distribution<int> phoneNumber(pow(10, numberQuantity - 1), pow(10, numberQuantity) - 1);
-	return "+" + std::to_string(areaCode(randomNumber)) + " " + std::to_string(phoneNumber(randomNumber));
+	int areaCode = RandomNumber(100, 999);
+	int phoneNumber = RandomNumber(pow(10, numberQuantity - 1), pow(10, numberQuantity) - 1);
+	return "+" + std::to_string(areaCode) + " " + std::to_string(phoneNumber);
 }
 
-std::string RequestGenerator::generateNumber(int min, int max) const
+std::string RequestGenerator::generateNumber(const int min, const int max) const // returns random number
 {
-	return std::to_string(rand() % (max - min) + min);
+	return std::to_string(RandomNumber(min, max));
 }
 
-std::string RequestGenerator::generateMail() const
+std::string RequestGenerator::generateMail() const // returns random correct e-mail
 {
 	std::string mail;
 	const int beforeAtSymbolMaxSize = 20;
 	const int beforeDotSymbolMaxSize = 10;
-	const int afterDotSymbolMaxSize = 3;
 
-	mail += generateWord(rand() % beforeAtSymbolMaxSize + 1) + '@';
-	mail += generateWord(rand() % beforeDotSymbolMaxSize + 1) + '.';
-	mail += generateWord(rand() % afterDotSymbolMaxSize + 1);
+	mail += generateWord(RandomNumber(3, beforeAtSymbolMaxSize)) + '@';
+	mail += generateWord(RandomNumber(3, beforeDotSymbolMaxSize)) + '.';
+	mail += generateWord(RandomNumber(2, 3));
 
 	return mail;
 }
 
-std::string RequestGenerator::generateWord(size_t size, bool startWithCapital) const
+std::string RequestGenerator::generateWord(const size_t size, bool startWithCapital) const // returns random word
 {
 	std::string word;
 	for (int i = 0; i < size; ++i)
-		word += rand() % 26 + 'a';
+		word += RandomNumber(0, 25) + 'a';
 	if (startWithCapital)
 		word[0] = toupper(word[0]);
 	return word;

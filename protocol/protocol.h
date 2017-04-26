@@ -12,7 +12,6 @@ class Request
 public:
 	void Description(std::ostream& = std::cout) const;       //  prints the rules of request protocol
 	void DataDescription(std::ostream& = std::cout) const;   //  prints the types of data
-	void Clear();                                            //  frees the contents of an array of words
 	void SetText(const std::string&);                        //  takes the text and turns it into a query
 	bool IsCorrect() const;                                  //  verifies the correctness of the text
 	bool Close() const;                                      //  checks the instruction for the end of the program
