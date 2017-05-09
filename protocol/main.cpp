@@ -10,7 +10,10 @@ int main()
 	while (!request.Close())
 	{
 		std::cout << std::endl << request << std::endl << std::endl;
-		std::cout << "Request " << (request.IsCorrect() ? "is " : "is not ") << "correct" << std::endl << std::endl;
+		if (request.IsCorrect())
+			std::cout << "Request is correct" << std::endl << std::endl;
+		else
+			std::cout << "Error: " << request.ErrorText() << std::endl << std::endl;
 		std::cin >> request;
 	}
 }

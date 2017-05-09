@@ -27,36 +27,7 @@ std::set<std::string> MakeDataSet()
 	dataSet.insert("auth to trade");
 	dataSet.insert("job title");
 	dataSet.insert("contact id");
-	return dataSet;
-}
-
-std::vector<std::string> MakeKeywordVector()
-{
-	//  pushing keywords
-	std::vector<std::string> keywordVector;
-	keywordVector.push_back("all");
-	keywordVector.push_back("that");
-	keywordVector.push_back("and");
-	keywordVector.push_back("or");
-	keywordVector.push_back("quantity of");
-	keywordVector.push_back("is");
-	keywordVector.push_back("is not");
-	keywordVector.push_back("is more than");
-	keywordVector.push_back("is less than");
-	keywordVector.push_back("is defined");
-	keywordVector.push_back("is undefined");
-	keywordVector.push_back(",");
-	keywordVector.push_back("close");
-	//  pushing parts of keywords
-	keywordVector.push_back("quantity");
-	keywordVector.push_back("of");
-	keywordVector.push_back("not");
-	keywordVector.push_back("more");
-	keywordVector.push_back("less");
-	keywordVector.push_back("than");
-	keywordVector.push_back("defined");
-	keywordVector.push_back("undefined");
-	return keywordVector;
+	return std::move(dataSet);
 }
 
 void Request::Description(std::ostream& output) const
@@ -105,106 +76,203 @@ void Request::SetText(const std::string& text)
 	splitToWords(text, tempArray);
 	m_phrases.clear();
 	getPhrases(tempArray);
+	m_errorText = "";
 }
 
-bool Request::IsCorrect() const
+bool Request::IsCorrect()
 {
 	bool dataIsValid = true, quantityOfIsValid = true, allowComma = true;
 	bool thatIsValid = false, commaIsValid = false, valueIsValid = false;
 	bool conditionIsValid = false, andOrIsValid = false, isConditionPart = false;
 	bool isQuantityOf = false;
-	std::string word;
+
 	for (auto i = m_phrases.begin(); i != m_phrases.end(); ++i)
 	{
-		if (*i == "all")
+		switch (i->type)
 		{
-			if (i != m_phrases.begin())   // can be only at first of expression
-				return false;
-			dataIsValid = quantityOfIsValid = allowComma = false;
-			thatIsValid = true;           // after can be only "that"
-		}
-		else if (*i == "quantity of")
-		{
-			if (!quantityOfIsValid || i + 1 == m_phrases.end())  // can not be the last word
-				return false;
-			quantityOfIsValid = allowComma = false;     // can not be the request like quantity of many data types
-			isQuantityOf = true;
-		}
-		else if (isData(*i))
-		{
-			if (!dataIsValid)
-				return false;
-			dataIsValid = false;
-			if (!isConditionPart)                    //  before condition part
-				thatIsValid = commaIsValid = true;
-			else                                     //  condition part 
+		case all:
+			if (i != m_phrases.begin()) // can be only at first of expression
 			{
-				if (i + 1 == m_phrases.end())        // can not be the last word
-					return false;
-				conditionIsValid = true;             // after can be only condition
+				m_errorText = "\"all\" can be only at first of expression";
+				return false;
 			}
-		}
-		else if (*i == "that")
-		{
-			if (!thatIsValid || i + 1 == m_phrases.end())    //  can not be the last word
+			dataIsValid = quantityOfIsValid = allowComma = false;
+			thatIsValid = true; // after can be only "that"
+			break;
+
+		case quantityOf:
+			if (!quantityOfIsValid)
+			{
+				m_errorText = "\"quantity of\" was used not correctly";
 				return false;
+			}
+			if (i + 1 == m_phrases.end()) // can not be the last word
+			{
+				m_errorText = "after \"quantity of\" is expected any data name";
+				return false;
+			}
+			quantityOfIsValid = allowComma = false; // can not be the request like quantity of many data types
+			isQuantityOf = true;
+			break;
+
+		case data:
+			if (!dataIsValid)
+			{
+				m_errorText = "\"" + i->word + "\" was used not correctly";
+				return false;
+			}
+			dataIsValid = false;
+			if (!isConditionPart) //  before condition part
+				thatIsValid = commaIsValid = true; //  after can be "that" or comma
+			else //  condition part 
+			{
+				if (i + 1 == m_phrases.end()) // can not be the last word
+				{
+					m_errorText = "after \"" + i->word + "\" is expected a continuation of condition";
+					return false;
+				}
+				conditionIsValid = true; // after can be only condition
+			}
+			break;
+
+		case that:
+			if (!thatIsValid)
+			{
+				m_errorText = "\"that\" was used not correctly";
+				return false;
+			}
+			if (i + 1 == m_phrases.end()) // can not be the last word
+			{
+				m_errorText = "after \"that\" is expected a condition";
+				return false;
+			}
 			thatIsValid = commaIsValid = isQuantityOf = false;
-			isConditionPart = dataIsValid = quantityOfIsValid = true;            //  after can be only data
-		}
-		else if (*i == ",")
-		{
-			if (!allowComma || !commaIsValid || i + 1 == m_phrases.end())
+			isConditionPart = dataIsValid = quantityOfIsValid = true; //  after can be data or "quantity of"
+			break;
+
+		case comma:
+			if (!allowComma)
+			{
+				m_errorText = "when requested \"quantity of\" use of comma is not allowed";
 				return false;
+			}
+			if (!commaIsValid)
+			{
+				m_errorText =  "comma was used not correctly";
+				return false;
+			}
+			if (i + 1 == m_phrases.end()) // can not be the last word
+			{
+				m_errorText = "after comma is expected a data name";
+				return false;
+			}
 			thatIsValid = commaIsValid = false;
-			dataIsValid = true;                              //  after can be only data
-		}
-		else if (*i == "is defined" || *i == "is undefined")
-		{
-			if (!conditionIsValid || isQuantityOf)
+			dataIsValid = true; //  after can be only data
+			break;
+
+		case isDefined_isUndefined:
+			if (!conditionIsValid)
+			{
+				m_errorText = "\"" + i->word + "\" was used not correctly";
 				return false;
+			}
+			if (isQuantityOf)
+			{
+				m_errorText = "when requested \"quantity of\" use of \"" + i->word + "\" is not allowed";
+				return false;
+			}
 			conditionIsValid = isQuantityOf = false;
-			andOrIsValid = true;                              //  after can be only and/or
-		}
-		else if (*i == "is" || *i == "is not")
-		{
-			if (!conditionIsValid || i + 1 == m_phrases.end())  //  can not be the last word
+			andOrIsValid = true; //  after can be only and/or
+			break;
+
+		case is_isNot:
+			if (!conditionIsValid)
+			{
+				m_errorText = "\"" + i->word + "\" was used not correctly";
 				return false;
+			}
+			if (i + 1 == m_phrases.end()) // can not be the last word
+			{
+				m_errorText = "after \"" + i->word + "\" is expected a value";
+				return false;
+			}
 			conditionIsValid = isQuantityOf = false;
-			valueIsValid = true;                              //  after acn be only value
-		}
-		else if (*i == "is more than" || *i == "is less than")
-		{
-			if (!conditionIsValid || !isQuantityOf || i + 1 == m_phrases.end())
+			valueIsValid = true; //  after can be only value
+			break;
+
+		case isMoreThan_isLessThan:
+			if (!conditionIsValid)
+			{
+				m_errorText = "\"" + i->word + "\" was used not correctly";
 				return false;
+			}
+			if (!isQuantityOf)
+			{
+				m_errorText = "when is not requested \"quantity of\" use of \"" + i->word + "\" is not allowed";
+				return false;
+			}
+			if (i + 1 == m_phrases.end()) // can not be the last word
+			{
+				m_errorText = "after \"" + i->word + "\" is expected a value";
+				return false;
+			}
 			conditionIsValid = isQuantityOf = false;
-			valueIsValid = true;
-		}
-		else if (*i == "and" || *i == "or")
-		{
-			if (!andOrIsValid || i + 1 == m_phrases.end())    //  can not be the last word
+			valueIsValid = true; // after can be only value
+			break;
+
+		case and_or:
+			if (!andOrIsValid)
+			{
+				m_errorText = "\"" + i->word + "\" was used not correctly";
 				return false;
+			}
+			if (i + 1 == m_phrases.end()) // can not be the last word
+			{
+				m_errorText = "after \"" + i->word + "\" is expected a condition";
+				return false;
+			}
 			andOrIsValid = false;
-			dataIsValid = quantityOfIsValid = true;           //  after can be only data
-		}
-		else if (*i == "close")
-		{
-			if (m_phrases.size() != 1)                        //  can be only alone
+			dataIsValid = quantityOfIsValid = true; // after can be data or quantity of
+			break;
+
+		case close:
+			if (m_phrases.size() != 1) //  can be only alone
+			{
+				m_errorText = "use of \"close\" is allowed only alone";
 				return false;
-		}
-		else // is value
-		{
+			}
+			break;
+
+		case value:
 			if (!valueIsValid)
+			{
+				m_errorText = "\"" + i->word + "\" was used not correctly";
 				return false;
+			}
 			valueIsValid = isQuantityOf = false;
-			andOrIsValid = true;                              //  after can be only and/or
+			andOrIsValid = true; //  after can be only and/or
 
-			if ((*(i - 2) == "work e-mail" || *(i - 2) == "home e-mail") && !isEmail(*i) && *(i - 3) != "quantity of")
+			if (((i - 2)->word == "work e-mail" || (i - 2)->word == "home e-mail") && (i - 1)->type == is_isNot && !isEmail(i->word))
+			{
+				m_errorText = "\"" + i->word + "\" is not correct e-mail";
 				return false;
-			if (*(i - 2) == "phone" && !isPhoneNumber(*i) && *(i - 3) != "quantity of")
+			}
+			if ((i - 2)->word == "phone" && (i - 1)->type == is_isNot && !isPhoneNumber(i->word))
+			{
+				m_errorText = "\"" + i->word + "\" is not correct phone number";
 				return false;
-
-			if ((*(i - 1) == "is more than" || *(i - 1) == "is less than") && !isNumber(*i))
+			}
+			if ((i - 1)->type == isMoreThan_isLessThan && !isNumber(i->word))
+			{
+				m_errorText = "\"" + i->word + "\" is not correct number";
 				return false;
+			}
+			if ((i - 3)->type == quantityOf && (i - 1)->type == is_isNot && !isNumber(i->word))
+			{
+				m_errorText = "\"" + i->word + "\" is not correct number";
+				return false;
+			}
+			break;
 		}
 	}
 	return true;
@@ -212,29 +280,17 @@ bool Request::IsCorrect() const
 
 bool Request::Close() const
 {
-	return m_phrases.size() == 1 && m_phrases.back() == "close";
+	return m_phrases.size() == 1 && m_phrases.back().type == close;
+}
+
+std::string Request::ErrorText() const
+{
+	return m_errorText;
 }
 
 bool Request::isData(const std::string& word) const
 {
-	std::string temp = word;
-	std::transform(temp.begin(), temp.end(), temp.begin(), ::tolower);
-	return std::find(m_dataSet.begin(), m_dataSet.end(), temp) != m_dataSet.end();
-}
-
-bool Request::isKeyword(const std::string & word, bool partsOfPhrase) const
-{
-	std::string temp = word;
-	std::transform(temp.begin(), temp.end(), temp.begin(), ::tolower);
-	if (partsOfPhrase)
-		return std::find(m_keywordVector.begin(), m_keywordVector.end(), temp) != m_keywordVector.end();
-	auto end = std::find(m_keywordVector.begin(), m_keywordVector.end(), "quantity");
-	return std::find(m_keywordVector.begin(), end, temp) != end;
-}
-
-bool Request::isSpecialKeyword(const std::string& s) const
-{
-	return s == "all" || s == "is defined" || s == "is undefined" || s == "that" || s == "and" || s == "or";
+	return std::find(m_dataSet.begin(), m_dataSet.end(), word) != m_dataSet.end();
 }
 
 bool Request::isNumber(const std::string& word) const
@@ -311,40 +367,56 @@ void Request::splitToWords(const std::string& text, std::vector<std::string>& te
 	}
 }
 
-void Request::getPhrases(std::vector<std::string>& tempArray)
+void Request::getPhrases(const std::vector<std::string>& tempArray)
 {
-	bool isNotFirstWord = false, isNotFirstKeyword = false;
 	for (auto i = tempArray.begin(); i != tempArray.end(); ++i)
 	{
-		if (isKeyword(*i, true))  //  including the parts of keywords
+		if (*i == "all")
+			m_phrases.push_back(TypedWord(*i, all));
+		else if (*i == "that")
+			m_phrases.push_back(TypedWord(*i, that));
+		else if (*i == "close")
+			m_phrases.push_back(TypedWord(*i, close));
+		else if (*i == "and" || *i == "or")
+			m_phrases.push_back(TypedWord(*i, and_or));
+		else if (*i == ",")
+			m_phrases.push_back(TypedWord(*i, comma));
+		else if (*i == "is")
+			m_phrases.push_back(TypedWord(*i, is_isNot));
+		else if (*i == "not" && !m_phrases.empty() && m_phrases.back().word == "is")
+			m_phrases.back().word += ' ' + *i;
+		else if ((*i == "defined" || *i == "undefined") && !m_phrases.empty() && m_phrases.back().word == "is")
 		{
-			std::transform(i->begin(), i->end(), i->begin(), ::tolower);
-			if (isNotFirstKeyword)  //  is the continuation of the previous keyword
-			{
-				m_phrases.back() += ' ' + *i;
-			}
-			else // is first keyword
-			{
-				m_phrases.push_back(*i);
-				isNotFirstKeyword = true;
-				isNotFirstWord = false;
-			}
-			if (isSpecialKeyword(m_phrases.back()))
-				isNotFirstKeyword = false;  //  after "is defined" / "is undefined" can be "or" / "and"
+			m_phrases.back().word += ' ' + *i;
+			m_phrases.back().type = isDefined_isUndefined;
 		}
-		else // is not keyword
+		else if ((*i == "more" || *i == "less") && !m_phrases.empty() && m_phrases.back().word == "is")
 		{
-			if (isNotFirstWord)  //  is the continuation of the previous word (data type or value)
-				m_phrases.back() += ' ' + *i;
-			else // is first word 
-			{
-				m_phrases.push_back(*i);
-				isNotFirstWord = true;
-				isNotFirstKeyword = false;
-			}
-			if (isData(m_phrases.back()))
-				std::transform(m_phrases.back().begin(), m_phrases.back().end(), m_phrases.back().begin(), ::tolower);
+			m_phrases.back().word += ' ' + *i;
+			m_phrases.back().type = value;
 		}
+		else if ((*i == "than") && !m_phrases.empty() && (m_phrases.back().word == "is more" || m_phrases.back().word == "is less"))
+		{
+			m_phrases.back().word += ' ' + *i;
+			m_phrases.back().type = isMoreThan_isLessThan;
+		}
+		else if (*i == "quantity")
+			m_phrases.push_back(TypedWord(*i, value));
+		else if (*i == "of" && !m_phrases.empty() && m_phrases.back().word == "quantity")
+		{
+			m_phrases.back().word += ' ' + *i;
+			m_phrases.back().type = quantityOf;
+		}
+		else if (isData(*i))
+			m_phrases.push_back(TypedWord(*i, data));
+		else if (!m_phrases.empty() && m_phrases.back().type == value)
+		{
+			m_phrases.back().word += ' ' + *i;
+			if (isData(m_phrases.back().word))
+				m_phrases.back().type = data;
+		}
+		else
+			m_phrases.push_back(TypedWord(*i, value));
 	}
 }
 
@@ -353,11 +425,10 @@ size_t Request::maximumSize() const  //  returns the size of the longest word in
 	size_t maxSize = 0;
 	for (auto i = m_phrases.begin(); i != m_phrases.end(); ++i)
 	{
-		if (i->size() > maxSize)
-			maxSize = i->size();
+		if (i->word.size() > maxSize)
+			maxSize = i->word.size();
 	}
 	return maxSize;
 }
 
 std::set<std::string> Request::m_dataSet = MakeDataSet();
-std::vector<std::string> Request::m_keywordVector = MakeKeywordVector();
