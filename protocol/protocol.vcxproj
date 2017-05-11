@@ -143,12 +143,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="protocol.cpp" />
-    <ClCompile Include="protocolTester.cpp" />
+    <ClCompile Include="request.cpp" />
+    <ClCompile Include="protocol_tester.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="protocol.h" />
-    <ClInclude Include="protocolTester.h" />
+    <ClInclude Include="request.h" />
+    <ClInclude Include="protocol_tester.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

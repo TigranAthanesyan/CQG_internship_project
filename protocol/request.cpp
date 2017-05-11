@@ -1,5 +1,12 @@
-#include "protocol.h"
+/**
+* @file    request.cpp
+* @author  Tigran Athanesyan
+* @version 1.0
+*/
 
+#include "request.h"
+
+/// Function for initializing the data set
 std::set<std::string> MakeDataSet()
 {
 	std::set<std::string> dataSet;
@@ -91,13 +98,13 @@ bool Request::IsCorrect()
 		switch (i->type)
 		{
 		case all:
-			if (i != m_phrases.begin()) // can be only at first of expression
+			if (i != m_phrases.begin()) /// can be only at first of expression
 			{
 				m_errorText = "\"all\" can be only at first of expression";
 				return false;
 			}
 			dataIsValid = quantityOfIsValid = allowComma = false;
-			thatIsValid = true; // after can be only "that"
+			thatIsValid = true; /// after can be only "that"
 			break;
 
 		case quantityOf:
@@ -106,12 +113,12 @@ bool Request::IsCorrect()
 				m_errorText = "\"quantity of\" was used not correctly";
 				return false;
 			}
-			if (i + 1 == m_phrases.end()) // can not be the last word
+			if (i + 1 == m_phrases.end()) /// can not be the last word
 			{
 				m_errorText = "after \"quantity of\" is expected any data name";
 				return false;
 			}
-			quantityOfIsValid = allowComma = false; // can not be the request like quantity of many data types
+			quantityOfIsValid = allowComma = false; /// can not be the request like quantity of many data types
 			isQuantityOf = true;
 			break;
 
@@ -122,16 +129,16 @@ bool Request::IsCorrect()
 				return false;
 			}
 			dataIsValid = false;
-			if (!isConditionPart) //  before condition part
-				thatIsValid = commaIsValid = true; //  after can be "that" or comma
-			else //  condition part 
+			if (!isConditionPart) ///  before condition part
+				thatIsValid = commaIsValid = true; ///  after can be "that" or comma
+			else ///  condition part 
 			{
-				if (i + 1 == m_phrases.end()) // can not be the last word
+				if (i + 1 == m_phrases.end()) /// can not be the last word
 				{
 					m_errorText = "after \"" + i->word + "\" is expected a continuation of condition";
 					return false;
 				}
-				conditionIsValid = true; // after can be only condition
+				conditionIsValid = true; /// after can be only condition
 			}
 			break;
 
@@ -141,13 +148,13 @@ bool Request::IsCorrect()
 				m_errorText = "\"that\" was used not correctly";
 				return false;
 			}
-			if (i + 1 == m_phrases.end()) // can not be the last word
+			if (i + 1 == m_phrases.end()) /// can not be the last word
 			{
 				m_errorText = "after \"that\" is expected a condition";
 				return false;
 			}
 			thatIsValid = commaIsValid = isQuantityOf = false;
-			isConditionPart = dataIsValid = quantityOfIsValid = true; //  after can be data or "quantity of"
+			isConditionPart = dataIsValid = quantityOfIsValid = true; ///  after can be data or "quantity of"
 			break;
 
 		case comma:
@@ -161,13 +168,13 @@ bool Request::IsCorrect()
 				m_errorText =  "comma was used not correctly";
 				return false;
 			}
-			if (i + 1 == m_phrases.end()) // can not be the last word
+			if (i + 1 == m_phrases.end()) /// can not be the last word
 			{
 				m_errorText = "after comma is expected a data name";
 				return false;
 			}
 			thatIsValid = commaIsValid = false;
-			dataIsValid = true; //  after can be only data
+			dataIsValid = true; ///  after can be only data
 			break;
 
 		case isDefined_isUndefined:
@@ -182,7 +189,7 @@ bool Request::IsCorrect()
 				return false;
 			}
 			conditionIsValid = isQuantityOf = false;
-			andOrIsValid = true; //  after can be only and/or
+			andOrIsValid = true; ///  after can be only and/or
 			break;
 
 		case is_isNot:
@@ -191,13 +198,13 @@ bool Request::IsCorrect()
 				m_errorText = "\"" + i->word + "\" was used not correctly";
 				return false;
 			}
-			if (i + 1 == m_phrases.end()) // can not be the last word
+			if (i + 1 == m_phrases.end()) /// can not be the last word
 			{
 				m_errorText = "after \"" + i->word + "\" is expected a value";
 				return false;
 			}
 			conditionIsValid = isQuantityOf = false;
-			valueIsValid = true; //  after can be only value
+			valueIsValid = true; ///  after can be only value
 			break;
 
 		case isMoreThan_isLessThan:
@@ -211,13 +218,13 @@ bool Request::IsCorrect()
 				m_errorText = "when is not requested \"quantity of\" use of \"" + i->word + "\" is not allowed";
 				return false;
 			}
-			if (i + 1 == m_phrases.end()) // can not be the last word
+			if (i + 1 == m_phrases.end()) /// can not be the last word
 			{
 				m_errorText = "after \"" + i->word + "\" is expected a value";
 				return false;
 			}
 			conditionIsValid = isQuantityOf = false;
-			valueIsValid = true; // after can be only value
+			valueIsValid = true; /// after can be only value
 			break;
 
 		case and_or:
@@ -226,17 +233,17 @@ bool Request::IsCorrect()
 				m_errorText = "\"" + i->word + "\" was used not correctly";
 				return false;
 			}
-			if (i + 1 == m_phrases.end()) // can not be the last word
+			if (i + 1 == m_phrases.end()) /// can not be the last word
 			{
 				m_errorText = "after \"" + i->word + "\" is expected a condition";
 				return false;
 			}
 			andOrIsValid = false;
-			dataIsValid = quantityOfIsValid = true; // after can be data or quantity of
+			dataIsValid = quantityOfIsValid = true; /// after can be data or quantity of
 			break;
 
 		case close:
-			if (m_phrases.size() != 1) //  can be only alone
+			if (m_phrases.size() != 1) ///  can be only alone
 			{
 				m_errorText = "use of \"close\" is allowed only alone";
 				return false;
@@ -250,7 +257,7 @@ bool Request::IsCorrect()
 				return false;
 			}
 			valueIsValid = isQuantityOf = false;
-			andOrIsValid = true; //  after can be only and/or
+			andOrIsValid = true; ///  after can be only and/or
 
 			if (((i - 2)->word == "work e-mail" || (i - 2)->word == "home e-mail") && (i - 1)->type == is_isNot && !isEmail(i->word))
 			{
@@ -327,6 +334,7 @@ bool Request::isPhoneNumber(const std::string& word) const
 {
 	if ((word[0] != '+' && !isdigit(word[0])) || word.size() < 10)
 		return false;
+
 	bool spaceIsValid = true;
 	for (int i = 1; i < word.size(); ++i)
 	{
@@ -335,7 +343,7 @@ bool Request::isPhoneNumber(const std::string& word) const
 			spaceIsValid = true;
 			continue;
 		}
-		if (word[i] != ' ' && spaceIsValid)
+		if (word[i] == ' ' && spaceIsValid)
 		{
 			spaceIsValid = false;
 			continue;
@@ -420,7 +428,7 @@ void Request::getPhrases(const std::vector<std::string>& tempArray)
 	}
 }
 
-size_t Request::maximumSize() const  //  returns the size of the longest word in the vector
+size_t Request::maximumSize() const
 {
 	size_t maxSize = 0;
 	for (auto i = m_phrases.begin(); i != m_phrases.end(); ++i)

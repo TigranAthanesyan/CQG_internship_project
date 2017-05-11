@@ -1,5 +1,4 @@
-#include "protocol.h"
-#include "protocolTester.h"
+#include "request.h"
 
 int main()
 {
@@ -18,10 +17,15 @@ int main()
 	}
 }
 
+
 /*
+
+#include "request.h"
+#include "protocol_tester.h"
+
 int main()
 {
-	RequestGenerator requestGenerator;
+	Tester::RequestGenerator requestGenerator;
 	Request request;
 	std::string requestText;
 
@@ -34,4 +38,5 @@ int main()
 		std::cin.get();
 	}
 }
+
 */
