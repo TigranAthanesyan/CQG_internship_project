@@ -142,11 +142,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="encrypt_decrypt.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="request.cpp" />
     <ClCompile Include="protocol_tester.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="encrypt_decrypt.h" />
     <ClInclude Include="request.h" />
     <ClInclude Include="protocol_tester.h" />
   </ItemGroup>

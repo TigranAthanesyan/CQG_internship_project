@@ -61,6 +61,9 @@ public:
 	bool IsCorrect();                                        ///  Verifies the correctness of the text
 	bool Close() const;                                      ///  Checks the instruction for the end of the program
 	std::string ErrorText() const;                           ///  Gets error text
+	
+	std::vector<TypedWord> GetPhrasesVector() { return m_phrases; }
+	std::set<std::string> GetDataSet() { return m_dataSet; }
 
 	friend std::istream& operator >> (std::istream& input, Request& request)  ///  Receives text from the file stream
 	{

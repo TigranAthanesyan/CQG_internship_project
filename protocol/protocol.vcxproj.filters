@@ -24,12 +24,18 @@
     <ClCompile Include="protocol_tester.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="encrypt_decrypt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="request.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="protocol_tester.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="encrypt_decrypt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
